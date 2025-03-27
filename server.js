@@ -1,28 +1,14 @@
 const express = require('express');
-const cors = require('cors');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-
+const request = require('request');
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-
-app.use('/proxy', createProxyMiddleware({
-  target: 'https://example.com',
-  changeOrigin: true,
-  pathRewrite: {
-    '^/proxy\\?url=': '',
-  },
-  router: (req) => {
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    return url.searchParams.get('url') || 'https://example.com';
-  }
-}));
-
-app.get('/', (req, res) => {
-  res.send('Proxy server is running!');
+app.get('/proxy', (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).send('Missing URL');
+  request(url).pipe(res);
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Proxy server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
